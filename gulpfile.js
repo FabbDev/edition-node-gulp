@@ -6,6 +6,7 @@
 var gulp = require('gulp'),
   path = require('path'),
   browserSync = require('browser-sync').create(),
+  sass = require('gulp-sass'),
   argv = require('minimist')(process.argv.slice(2)),
   chalk = require('chalk');
 
@@ -28,6 +29,14 @@ function normalizePath() {
     )
     .replace(/\\/g, "/");
 }
+
+// SASS Compilation
+// @see @see https://www.brianmuenzenmeyer.com/adding-common-gulp-tasks-to-pattern-lab-node
+gulp.task('pl-sass', function(){
+  return gulp.src(path.resolve(paths().source.css, '**/*.scss'))
+    .pipe(sass().on('error', sass.logError))
+    .pipe(gulp.dest(path.resolve(paths().source.css)));
+});
 
 /******************************************************
  * COPY TASKS - stream assets from source to destination
@@ -119,6 +128,7 @@ gulp.task('pl-assets', gulp.series(
   'pl-copy:img',
   'pl-copy:favicon',
   'pl-copy:font',
+  'pl-sass',
   'pl-copy:css',
   'pl-copy:styleguide',
   'pl-copy:styleguide-css'
@@ -189,6 +199,12 @@ function reloadCSS(done) {
 
 function watch() {
   const watchers = [
+    {
+      name: 'SASS',
+      paths: [normalizePath(paths().source.css, '**', '*.scss')],
+      config: { awaitWriteFinish: true },
+      tasks: gulp.series('pl-sass', 'pl-copy:css', reloadCSS)
+    },
     {
       name: 'CSS',
       paths: [normalizePath(paths().source.css, '**', '*.css')],
